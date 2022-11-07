@@ -1,0 +1,5 @@
+CALENDAR_BASE_URL=https://dav.somesite.de/dav.php
+CALENDAR_USERNAME=user
+CALENDAR_PASSWORD=pass
+CALENDAR_NAME=calendar_abc
+

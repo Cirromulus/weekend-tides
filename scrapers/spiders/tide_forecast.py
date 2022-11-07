@@ -25,7 +25,7 @@ class TideForecastSpider(scrapy.Spider):
                             timetext = "12:" + timetext.split(":")[1]
                         height = elems[i+2].css('::text').get()
                         full_time = datetime.datetime.strptime(datetext + " " + timetext, datetext_format + ' %I:%M %p')
-                        print ("Found " + text + " at " + str(full_time) + " (" + height + ")")
+                        #print ("Found " + text + " at " + str(full_time) + " (" + height + ")")
                         thisday_tide_points.append({'Tide Point': text, 'time' : full_time, 'height_text' : height})
             
             sunmooncells = daycard.css('td.tide-day__sun-moon-cell')
