@@ -58,10 +58,10 @@ class InsertIntoCalDav:
             password=password,
             url=base_url
         )
+        self.calendar_id = calendar
         self.principal = self.client.principal()
-        self.calendar = self.principal.calendar(cal_id=calendar)
         self.margin = timedelta(minutes=60)
-        print("Opening " + self.calendar.get_display_name())
+        self.use_expanded_search = True
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -73,12 +73,17 @@ class InsertIntoCalDav:
         )
 
     def open_spider(self, spider):
-        #events = self.calendar.events()
-        #for event in events:
-            #print("not Deleting maybe conflicting event " + str(conflicting_event))
-            #conflicting_event.delete()
-        yield
-
+        self.calendar = self.principal.calendar(cal_id=self.calendar_id)
+        assert self.calendar
+        print("Opening " + self.calendar.get_display_name())
+        
+        try:
+            events_fetched = self.calendar.date_search(
+                start=datetime.now(), end=datetime.now()+self.margin, expand=True
+            )
+        except:
+            self.use_expanded_search = False
+        
     def close_spider(self, spider):
         #close
         yield
@@ -87,6 +92,14 @@ class InsertIntoCalDav:
         # save it
         adapter = ItemAdapter(item)
         time = adapter.get('time')
+        
+        for conflicting_element in self.calendar.date_search(
+                start=time - self.margin*2,
+                end=time + self.margin*2,
+                expand=self.use_expanded_search
+            ):
+            print("Deleting conflicting event " + str(conflicting_element))
+            conflicting_element.delete()
 
         kite_event = self.calendar.save_event(
             dtstart = time - self.margin,
