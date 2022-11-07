@@ -4,7 +4,7 @@ import datetime
 class TideForecastSpider(scrapy.Spider):
     name = 'tide-forecast_extractor'
     start_urls = ['https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest']
-    
+
     def parse(self, response):
         daycards = response.css('div.tide-day')
         for daycard in daycards:
@@ -31,5 +31,5 @@ class TideForecastSpider(scrapy.Spider):
                         height = elems[i+2].css('::text').get()
                         full_time = datetime.datetime.strptime(datetext + " " + timetext, datetext_format + ' %I:%M %p')
                         #print ("Found " + text + " at " + str(full_time) + " (" + height + ")")
-                        yield({'time' : full_time, 'isFlut': text == 'High Tide', 'height_text' : height, 'sunrise' : sunrise_date, 'sunset' : sunset_date})
+                        yield({'time' : full_time, 'isFlut': text == 'High Tide', 'height_text' : height, 'sunrise' : sunrise_date, 'sunset' : sunset_date, "data_source" : "'https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest'", "crawl_time" : datetime.datetime.now()})
 
