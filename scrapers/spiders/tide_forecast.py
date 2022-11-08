@@ -12,14 +12,15 @@ class TideForecastSpider(scrapy.Spider):
         windspeeds_raw = [int(elem) for elem in response.css('text.wind-icon__val::text').getall() if elem.isnumeric()]
         windspeed_unit = response.css('.tide-table__label--wind .windu::text').get()
         wind_directions_raw = response.css('div.wind-icon__tooltip::text').getall()
+
         #first day always quad resolution
         fistday_num_samples = 4
         firstday_average_windspeed = sum(windspeeds_raw[:fistday_num_samples])/fistday_num_samples
         firstday_average_direction = most_frequent(wind_directions_raw[:fistday_num_samples])
         windspeeds = windspeeds_raw[fistday_num_samples:]
-        windspeeds.insert(0, firstday_average_windspeed)
+        #windspeeds.insert(0, firstday_average_windspeed)   # First day is not present in daycards!
         wind_directions = wind_directions_raw[fistday_num_samples:]
-        wind_directions.insert(0, firstday_average_direction)
+        #wind_directions.insert(0, firstday_average_direction)
 
         daycards = response.css('div.tide-day')
         for day, daycard in enumerate(daycards):
