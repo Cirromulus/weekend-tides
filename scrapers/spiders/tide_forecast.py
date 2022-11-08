@@ -1,13 +1,28 @@
 import scrapy
 import datetime
 
+def most_frequent(List):
+    return max(set(List), key = List.count)
+
 class TideForecastSpider(scrapy.Spider):
     name = 'tide-forecast_extractor'
     start_urls = ['https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest']
 
     def parse(self, response):
+        windspeeds_raw = [int(elem) for elem in response.css('text.wind-icon__val::text').getall() if elem.isnumeric()]
+        windspeed_unit = response.css('.tide-table__label--wind .windu::text').get()
+        wind_directions_raw = response.css('div.wind-icon__tooltip::text').getall()
+        #first day always quad resolution
+        fistday_num_samples = 4
+        firstday_average_windspeed = sum(windspeeds_raw[:fistday_num_samples])/fistday_num_samples
+        firstday_average_direction = most_frequent(wind_directions_raw[:fistday_num_samples])
+        windspeeds = windspeeds_raw[fistday_num_samples:]
+        windspeeds.insert(0, firstday_average_windspeed)
+        wind_directions = wind_directions_raw[fistday_num_samples:]
+        wind_directions.insert(0, firstday_average_direction)
+
         daycards = response.css('div.tide-day')
-        for daycard in daycards:
+        for day, daycard in enumerate(daycards):
             datetext = daycard.css('.tide-day__date::text').get().split(": ")[-1]
             datetext_format = '%A %d %B %Y'
             thisday_date = datetime.datetime.strptime(datetext, datetext_format)
@@ -31,5 +46,16 @@ class TideForecastSpider(scrapy.Spider):
                         height = elems[i+2].css('::text').get()
                         full_time = datetime.datetime.strptime(datetext + " " + timetext, datetext_format + ' %I:%M %p')
                         #print ("Found " + text + " at " + str(full_time) + " (" + height + ")")
-                        yield({'time' : full_time, 'isFlut': text == 'High Tide', 'height_text' : height, 'sunrise' : sunrise_date, 'sunset' : sunset_date, "data_source" : "'https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest'", "crawl_time" : datetime.datetime.now()})
+                        yield({
+                            'time' : full_time,
+                            'isFlut': text == 'High Tide',
+                            'height_text' : height,
+                            'sunrise' : sunrise_date,
+                            'sunset' : sunset_date,
+                            'wind_speed' : windspeeds[day] if day < len(windspeeds) else 0,
+                            'wind_unit' :  windspeed_unit,
+                            'wind_dir' : wind_directions[day] if day < len(wind_directions) else 'Unknown',
+                            "data_source" : "'https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest'",
+                            "crawl_time" : datetime.datetime.now()
+                        })
 

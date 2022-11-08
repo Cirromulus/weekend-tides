@@ -101,11 +101,31 @@ class InsertIntoCalDav:
             print("Deleting conflicting event " + str(conflicting_element))
             conflicting_element.delete()
 
+        title = "Hochwasser"
+        desc = ""
+        if adapter.get('wind_speed') > 0:
+            title += " bei "
+            value = adapter.get('wind_speed')
+            unit = adapter.get('wind_unit')
+            if adapter.get('wind_unit') == "km/h":
+                value *= 0.539957
+                unit = "knots"
+            else:
+                print("Unknown speed unit " + adapter.get('wind_unit') + "!")
+            title += str(round(value)) + " " + unit + " " + adapter.get('wind_dir')
+        else:
+            title += " um " + time.strftime("%H:%M")
+            desc += "Windgeschwindigkeit noch nicht bekannt.\n"
+
+        desc += "Hochwasser bei " + adapter.get('height_text') + "\n"
+        desc += "\nStand " + adapter.get('crawl_time').strftime("%Y-%m-%d") + ", Quelle: " + adapter.get('data_source') + "\n"
+        desc += "\n" + str(item)
+
         kite_event = self.calendar.save_event(
             dtstart = time - self.margin,
             dtend = time + self.margin,
-            summary = "Hochwasser bei " + adapter.get('height_text'),
-            description = "Wind: Unbekannt.\n" + str(item)
+            summary = title,
+            description = desc
         )
         return item
 
