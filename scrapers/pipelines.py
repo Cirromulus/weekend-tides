@@ -92,16 +92,20 @@ class InsertIntoCalDav:
         # save it
         adapter = ItemAdapter(item)
         time = adapter.get('time')
+        location = adapter.get('location').split(",")[0]    # Country is not interesting
         
-        for conflicting_element in self.calendar.date_search(
+        for conflicting_event in self.calendar.date_search(
                 start=time - self.margin*2,
                 end=time + self.margin*2,
                 expand=self.use_expanded_search
             ):
-            print("Deleting conflicting event " + str(conflicting_element))
-            conflicting_element.delete()
+            if ((hasattr(conflicting_event.vobject_instance.vevent, "location") and location in conflicting_event.vobject_instance.vevent.location.value)
+                or (location in conflicting_event.vobject_instance.vevent.summary.value)):
+                # the previous event is actually our location
+                print("Deleting conflicting event " + str(conflicting_event))
+                conflicting_event.delete()
 
-        title = "Hochwasser"
+        title = "Hochwasser " + location
         desc = ""
         if adapter.get('wind_speed') > 0:
             title += " bei "
@@ -125,6 +129,7 @@ class InsertIntoCalDav:
             dtstart = time - self.margin,
             dtend = time + self.margin,
             summary = title,
+            location = location,
             description = desc
         )
         return item

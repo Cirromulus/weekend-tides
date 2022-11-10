@@ -5,10 +5,20 @@ def most_frequent(List):
     return max(set(List), key = List.count)
 
 class TideForecastSpider(scrapy.Spider):
-    name = 'tide-forecast_extractor'
-    start_urls = ['https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest']
+    name = 'tide-forecast'
+    allowed_domains = ['tide-forecast.com']
+
+    def start_requests(self):
+        if not hasattr(self, "location") or not self.location:
+            print ("location not given. pass '-a location=somewhere,somewhere_else'")
+            raise BaseException
+
+        for location in self.location.split(","):
+            yield scrapy.Request(f'https://www.tide-forecast.com/locations/{location}/tides/latest')
 
     def parse(self, response):
+        location = response.css('.tide-header__title::text').get().split("times for ")[-1]
+
         windspeeds_raw = [int(elem) for elem in response.css('text.wind-icon__val::text').getall() if elem.isnumeric()]
         windspeed_unit = response.css('.tide-table__label--wind .windu::text').get()
         wind_directions_raw = response.css('div.wind-icon__tooltip::text').getall()
@@ -56,7 +66,8 @@ class TideForecastSpider(scrapy.Spider):
                             'wind_speed' : windspeeds[day] if day < len(windspeeds) else 0,
                             'wind_unit' :  windspeed_unit,
                             'wind_dir' : wind_directions[day] if day < len(wind_directions) else 'Unknown',
-                            "data_source" : "'https://www.tide-forecast.com/locations/Robbensudsteert-Germany/tides/latest'",
+                            'location' : location,
+                            "data_source" : response._url,
                             "crawl_time" : datetime.datetime.now()
                         })
 
