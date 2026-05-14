@@ -10,6 +10,9 @@ from scrapy.exceptions import DropItem
 from datetime import datetime
 from datetime import timedelta
 
+def convertKmhToKnots(value):
+    return value * 0.539957
+
 class ChooseWeekendTides:
     weeknames = ["Momdag", "Diemstag", "Mettwoch", "Dundurstag", "FREYTAG", "Samsday", "Sonnday"]
     def process_item(self, item, spider):
@@ -39,10 +42,13 @@ class ChooseEnoughWind:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        is_knots = adapter.get('wind_unit') == 'knots'
-        if not is_knots:
-            # conversion not implemented, just forward it
-            return item
+        value = adapter.get('wind_speed')
+        unit = adapter.get('wind_unit')
+        if unit == "km/h":
+            value = convertKmhToKnots(value)
+        elif unit != "knots":
+            print("WARN: Unknown speed unit " + adapter.get('wind_unit') + "!")
+
         wind_speed = float(adapter.get('wind_speed'))
         if wind_speed < self.min_knots:
             raise DropItem("Wind speed below " + str(self.min_knots) + " knots")
@@ -126,7 +132,7 @@ class InsertIntoCalDav:
             value = adapter.get('wind_speed')
             unit = adapter.get('wind_unit')
             if adapter.get('wind_unit') == "km/h":
-                value *= 0.539957
+                value = value = convertKmhToKnots(value)
                 unit = "knots"
             else:
                 print("Unknown speed unit " + adapter.get('wind_unit') + "!")
