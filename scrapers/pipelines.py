@@ -33,6 +33,20 @@ class ChooseHighTidesWithDaylight:
                 return item
         raise DropItem("No high tide within " + str(self.margin) + " of daylight")
 
+class ChooseEnoughWind:
+    def __init__(self):
+        self.min_knots = 10
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        is_knots = adapter.get('wind_unit') == 'knots'
+        if not is_knots:
+            # conversion not implemented, just forward it
+            return item
+        wind_speed = float(adapter.get('wind_speed'))
+        if wind_speed < self.min_knots:
+            raise DropItem("Wind speed below " + str(self.min_knots) + " knots")
+        return item
 
 class RemoveDuplicates:
     def __init__(self):
@@ -76,14 +90,14 @@ class InsertIntoCalDav:
         self.calendar = self.principal.calendar(cal_id=self.calendar_id)
         assert self.calendar
         print("Opening " + self.calendar.get_display_name())
-        
+
         try:
             events_fetched = self.calendar.date_search(
                 start=datetime.now(), end=datetime.now()+self.margin, expand=True
             )
         except:
             self.use_expanded_search = False
-        
+
     def close_spider(self, spider):
         #close
         yield
@@ -93,7 +107,7 @@ class InsertIntoCalDav:
         adapter = ItemAdapter(item)
         time = adapter.get('time')
         location = adapter.get('location').split(",")[0]    # Country is not interesting
-        
+
         for conflicting_event in self.calendar.date_search(
                 start=time - self.margin*2,
                 end=time + self.margin*2,

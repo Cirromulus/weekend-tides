@@ -65,6 +65,7 @@ DOWNLOAD_DELAY = 3
 ITEM_PIPELINES = {
     'scrapers.pipelines.ChooseWeekendTides': 300,
     'scrapers.pipelines.ChooseHighTidesWithDaylight' : 400,
+    'scrapers.pipelines.ChooseEnoughWind' : 450,
     'scrapers.pipelines.RemoveDuplicates' : 500,
     'scrapers.pipelines.InsertIntoCalDav': 1000,
 }
