@@ -66,7 +66,7 @@ from caldav import Event
 
 class InsertIntoCalDav:
     def __init__(self, base_url, calendar, user, password):
-        #print("Trying CalDav connection with " + user + " and " + password)
+        print(f"Trying CalDav connection with {user} on {base_url}")
         self.client = DAVClient(
             username=user,
             password=password,
