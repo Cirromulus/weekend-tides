@@ -43,6 +43,11 @@ class ChooseEnoughWind:
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         value = adapter.get('wind_speed')
+
+        if value == 0:
+            # unknown wind speed.
+            return item
+
         unit = adapter.get('wind_unit')
         if unit == "km/h":
             value = convertKmhToKnots(value)
